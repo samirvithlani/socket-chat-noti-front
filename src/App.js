@@ -1,31 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import io from 'socket.io-client';
-import { AddBadmintonScore } from './AddBadmintonScore';
-import { GetLiveScore } from './GetLiveScore';
+import NotificationSender from './NotificationSender';
 
-const socket = io('http://localhost:5000/'); // Connect to the server
-
-function App() {
-    const [liveScoreUpdate, setLiveScoreUpdate] = useState(null);
-
+const App = () => {
     useEffect(() => {
-        // Listen for live score updates
-        socket.on('liveScoreUpdate', (data) => {
-          console.log(data);
-            setLiveScoreUpdate(data.message);
+        const socket = io('http://localhost:3000', {
+            transports: ['websocket'],
+            cors: {
+                origin: "http://localhost:3001", // Change to the URL of your React app
+                credentials: true,
+            }
         });
+        socket.on('connection', (data) => {
+            console.log("app.js////",data);
+        });
+
+        socket.on('notification', (message) => {
+            alert('Notification received: ' + message);
+            console.log('Notification received: ' + message);
+        });
+
+        return () => {
+            if (socket) {
+                socket.disconnect();
+            }
+        };
     }, []);
 
     return (
         <div className="App">
-            
-            <h1>Live Score Updates</h1>
-            {liveScoreUpdate && <p>{liveScoreUpdate}</p>}
-            {/* Add your live score components here */}
             <Routes>
-                    <Route path='/updateScore' element ={<AddBadmintonScore/>}></Route>
-                    <Route path ="/getlivescore" element= {<GetLiveScore/>}></Route>
+                <Route path='/notification' element={<NotificationSender />} />
             </Routes>
         </div>
     );
